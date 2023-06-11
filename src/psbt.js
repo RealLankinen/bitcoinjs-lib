@@ -578,8 +578,8 @@ class Psbt {
         .catch(reject);
     });
   }
-  signAllInputs(keyPair, sighashTypes) {
-    if (!keyPair || !keyPair.publicKey)
+  signAllInputs(publicKey, sighashTypes) {
+    if (!publicKey)
       throw new Error('Need Signer to sign input');
     // TODO: Add a pubkey/pubkeyhash cache to each input
     // as input information is added, then eventually
@@ -587,16 +587,16 @@ class Psbt {
     const results = [];
     for (const i of range(this.data.inputs.length)) {
       try {
-        this.signInput(i, keyPair, sighashTypes);
-        results.push(true);
+        const hashToSign = this.signInput(i, publicKey, sighashTypes);
+        results.push(hashToSign);
       } catch (err) {
         results.push(false);
       }
     }
-    if (results.every(v => v === false)) {
-      throw new Error('No inputs were signed');
+    if (results.some(v => v === false)) {
+      throw new Error("Some inputs weren't signed");
     }
-    return this;
+    return results;
   }
   signAllInputsAsync(keyPair, sighashTypes) {
     return new Promise((resolve, reject) => {
@@ -627,8 +627,8 @@ class Psbt {
       });
     });
   }
-  signInput(inputIndex, keyPair, sighashTypes) {
-    if (!keyPair || !keyPair.publicKey)
+  signInput(inputIndex, publicKey, sighashTypes) {
+    if (!publicKey)
       throw new Error('Need Signer to sign input');
     const input = (0, utils_1.checkForInput)(this.data.inputs, inputIndex);
     if ((0, bip371_1.isTaprootInput)(input)) {
@@ -640,7 +640,7 @@ class Psbt {
         sighashTypes,
       );
     }
-    return this._signInput(inputIndex, keyPair, sighashTypes);
+    return this._signInput(inputIndex, publicKey, sighashTypes);
   }
   signTaprootInput(inputIndex, keyPair, tapLeafHashToSign, sighashTypes) {
     if (!keyPair || !keyPair.publicKey)
@@ -658,23 +658,20 @@ class Psbt {
   }
   _signInput(
     inputIndex,
-    keyPair,
+    publicKey,
     sighashTypes = [transaction_1.Transaction.SIGHASH_ALL],
   ) {
     const { hash, sighashType } = getHashAndSighashType(
       this.data.inputs,
       inputIndex,
-      keyPair.publicKey,
+      publicKey,
       this.__CACHE,
       sighashTypes,
     );
-    const partialSig = [
-      {
-        pubkey: keyPair.publicKey,
-        signature: bscript.signature.encode(keyPair.sign(hash), sighashType),
-      },
-    ];
-    this.data.updateInput(inputIndex, { partialSig });
+    return { hash, sighashType }
+  }
+  updateInputs(partialSigs) {
+    partialSigs.forEach(partialSig => this.data.updateInput(inputIndex, { partialSig }));
     return this;
   }
   _signTaprootInput(

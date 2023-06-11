@@ -97,9 +97,10 @@ export declare class Psbt {
     signAllInputsHDAsync(hdKeyPair: HDSigner | HDSignerAsync, sighashTypes?: number[]): Promise<void>;
     signInputHD(inputIndex: number, hdKeyPair: HDSigner, sighashTypes?: number[]): this;
     signInputHDAsync(inputIndex: number, hdKeyPair: HDSigner | HDSignerAsync, sighashTypes?: number[]): Promise<void>;
-    signAllInputs(keyPair: Signer, sighashTypes?: number[]): this;
+    signAllInputs(publicKey: Buffer, sighashTypes?: number[]): {hash: Buffer, sighashType: number}[];
+    updateInputs(partialSigs: { pubkey: Buffer, signature: Buffer }[]): this;
     signAllInputsAsync(keyPair: Signer | SignerAsync, sighashTypes?: number[]): Promise<void>;
-    signInput(inputIndex: number, keyPair: Signer, sighashTypes?: number[]): this;
+    signInput(inputIndex: number, publickey: Buffer, sighashTypes?: number[]): this;
     signTaprootInput(inputIndex: number, keyPair: Signer, tapLeafHashToSign?: Buffer, sighashTypes?: number[]): this;
     private _signInput;
     private _signTaprootInput;
