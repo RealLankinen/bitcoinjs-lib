@@ -668,11 +668,7 @@ class Psbt {
       this.__CACHE,
       sighashTypes,
     );
-    return { hash, sighashType }
-  }
-  updateInputs(partialSigs) {
-    partialSigs.forEach(partialSig => this.data.updateInput(inputIndex, { partialSig }));
-    return this;
+    return { hash, sighashType, inputIndex }
   }
   _signTaprootInput(
     inputIndex,
