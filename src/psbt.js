@@ -510,7 +510,7 @@ class Psbt {
     if (results.some(v => v === false)) {
       throw new Error("Some inputs weren't signed");
     }
-    return results;
+    return results.flat();
   }
   signAllInputsHDAsync(
     hdKeyPair,
