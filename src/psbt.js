@@ -496,25 +496,21 @@ class Psbt {
     return validationResultCount > 0;
   }
   signAllInputsHD(
-    hdKeyPair,
     sighashTypes = [transaction_1.Transaction.SIGHASH_ALL],
   ) {
-    if (!hdKeyPair || !hdKeyPair.publicKey || !hdKeyPair.fingerprint) {
-      throw new Error('Need HDSigner to sign input');
-    }
     const results = [];
     for (const i of range(this.data.inputs.length)) {
       try {
-        this.signInputHD(i, hdKeyPair, sighashTypes);
-        results.push(true);
+        const hashToSign = this.signInputHD(i, sighashTypes);
+        results.push(hashToSign);
       } catch (err) {
         results.push(false);
       }
     }
-    if (results.every(v => v === false)) {
-      throw new Error('No inputs were signed');
+    if (results.some(v => v === false)) {
+      throw new Error("Some inputs weren't signed");
     }
-    return this;
+    return results;
   }
   signAllInputsHDAsync(
     hdKeyPair,
@@ -548,15 +544,10 @@ class Psbt {
   }
   signInputHD(
     inputIndex,
-    hdKeyPair,
     sighashTypes = [transaction_1.Transaction.SIGHASH_ALL],
   ) {
-    if (!hdKeyPair || !hdKeyPair.publicKey || !hdKeyPair.fingerprint) {
-      throw new Error('Need HDSigner to sign input');
-    }
-    const signers = getSignersFromHD(inputIndex, this.data.inputs, hdKeyPair);
-    signers.forEach(signer => this.signInput(inputIndex, signer, sighashTypes));
-    return this;
+    const signers = getSignersFromHD(inputIndex, this.data.inputs);
+    return signers.map(signer => this.signInput(inputIndex, signer.publicKey, sighashTypes));
   }
   signInputHDAsync(
     inputIndex,
@@ -1431,32 +1422,12 @@ function getScriptFromInput(inputIndex, input, cache) {
   }
   return res;
 }
-function getSignersFromHD(inputIndex, inputs, hdKeyPair) {
+function getSignersFromHD(inputIndex, inputs) {
   const input = (0, utils_1.checkForInput)(inputs, inputIndex);
   if (!input.bip32Derivation || input.bip32Derivation.length === 0) {
     throw new Error('Need bip32Derivation to sign with HD');
   }
-  const myDerivations = input.bip32Derivation
-    .map(bipDv => {
-      if (bipDv.masterFingerprint.equals(hdKeyPair.fingerprint)) {
-        return bipDv;
-      } else {
-        return;
-      }
-    })
-    .filter(v => !!v);
-  if (myDerivations.length === 0) {
-    throw new Error(
-      'Need one bip32Derivation masterFingerprint to match the HDSigner fingerprint',
-    );
-  }
-  const signers = myDerivations.map(bipDv => {
-    const node = hdKeyPair.derivePath(bipDv.path);
-    if (!bipDv.pubkey.equals(node.publicKey)) {
-      throw new Error('pubkey did not match bip32Derivation');
-    }
-    return node;
-  });
+  const signers = input.bip32Derivation.map(bipDv => bipDv.publicKey);
   return signers;
 }
 function getSortedSigs(script, partialSig) {
