@@ -547,7 +547,7 @@ class Psbt {
     sighashTypes = [transaction_1.Transaction.SIGHASH_ALL],
   ) {
     const signers = getSignersFromHD(inputIndex, this.data.inputs);
-    return signers.map(signer => this.signInput(inputIndex, signer.publicKey, sighashTypes));
+    return signers.map(signer => ({ ...this.signInput(inputIndex, signer.publicKey, sighashTypes), path: signer.path }));
   }
   signInputHDAsync(
     inputIndex,
@@ -1427,7 +1427,7 @@ function getSignersFromHD(inputIndex, inputs) {
   if (!input.bip32Derivation || input.bip32Derivation.length === 0) {
     throw new Error('Need bip32Derivation to sign with HD');
   }
-  const signers = input.bip32Derivation.map(bipDv => bipDv.publicKey);
+  const signers = input.bip32Derivation.map(bipDv => ({ publicKey: bipDv.pubkey, path: bipDv.path }));
   return signers;
 }
 function getSortedSigs(script, partialSig) {

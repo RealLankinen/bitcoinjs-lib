@@ -93,9 +93,9 @@ export declare class Psbt {
     validateSignaturesOfInput(inputIndex: number, validator: ValidateSigFunction, pubkey?: Buffer): boolean;
     private _validateSignaturesOfInput;
     private validateSignaturesOfTaprootInput;
-    signAllInputsHD(sighashTypes?: number[]): this;
+    signAllInputsHD(sighashTypes?: number[]): {hash: Buffer, sighashType: number, inputIndex: number, path: string}[];
     signAllInputsHDAsync(hdKeyPair: HDSigner | HDSignerAsync, sighashTypes?: number[]): Promise<void>;
-    signInputHD(inputIndex: number, sighashTypes?: number[]): this;
+    signInputHD(inputIndex: number, sighashTypes?: number[]): {hash: Buffer, sighashType: number, inputIndex: number, path: string};
     signInputHDAsync(inputIndex: number, hdKeyPair: HDSigner | HDSignerAsync, sighashTypes?: number[]): Promise<void>;
     signAllInputs(publicKey: Buffer, sighashTypes?: number[]): {hash: Buffer, sighashType: number, inputIndex: number}[];
     signAllInputsAsync(keyPair: Signer | SignerAsync, sighashTypes?: number[]): Promise<void>;
